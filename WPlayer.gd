@@ -51,7 +51,7 @@ enum ExtraPosePoint {
 const extra_count = ExtraPosePoint.ASS + 1
 
 var _points:PoolVector2Array
-var _poses
+var _poses = []
 
 func set_pose(pid, detected):
 	_poses[pid] = detected
@@ -62,7 +62,7 @@ func set_point(pid, point, extra = false):
 	_points[pid] = point
 
 func _ready():
-	for p in range(0, PosePoint.RIGHT_FOOT_INDEX + 1):
+	for _p in range(0, PosePoint.RIGHT_FOOT_INDEX + 1):
 		_points.push_back(Vector2(-1, -1))
-	for p in range(0, pose_count + extra_count):
+	for _p in range(0, pose_count + extra_count):
 		_poses.push_back(false)
