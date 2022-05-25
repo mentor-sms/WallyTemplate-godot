@@ -44,6 +44,8 @@ const point_count = PosePoint.RIGHT_FOOT_INDEX + 1
 enum ExtraPosePoint {
 	LEFT_HAND,
 	RIGHT_HAND,
+	LEFT_FOOT,
+	RIGHT_FOOT,
 	NECK,
 	TORSO_CENTRE,
 	ASS
@@ -59,10 +61,10 @@ func set_pose(pid, detected):
 func set_point(pid, point, extra = false):
 	if extra:
 		pid += point_count
-	_points[pid] = point
+	_points[int(pid)] = point
 
 func _ready():
-	for _p in range(0, PosePoint.RIGHT_FOOT_INDEX + 1):
+	for _p in range(0, point_count + extra_count):
 		_points.push_back(Vector2(-1, -1))
-	for _p in range(0, pose_count + extra_count):
+	for _p in range(0, pose_count):
 		_poses.push_back(false)

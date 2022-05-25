@@ -14,10 +14,10 @@ margin_right = 1920.0
 margin_bottom = 1080.0
 
 [node name="Label" type="Label" parent="WebcamTestView"]
-margin_left = 176.0
-margin_top = 112.0
-margin_right = 299.0
-margin_bottom = 139.0
+margin_left = 136.0
+margin_top = 72.0
+margin_right = 259.0
+margin_bottom = 99.0
 text = "WebcamTestView"
 __meta__ = {
 "_editor_description_": "WebcamTestView"
@@ -44,3 +44,14 @@ margin_top = 213.0
 margin_right = 342.0
 margin_bottom = 227.0
 text = "GameView"
+
+[node name="ConfigureView" type="TextureRect" parent="."]
+margin_right = 1920.0
+margin_bottom = 1080.0
+
+[node name="Label" type="Label" parent="ConfigureView"]
+margin_left = 192.0
+margin_top = 120.0
+margin_right = 232.0
+margin_bottom = 134.0
+text = "ConfigureView"
