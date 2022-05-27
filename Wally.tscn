@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://Wally.gd" type="Script" id=1]
 [ext_resource path="res://WPlayer.gd" type="Script" id=2]
+[ext_resource path="res://dejavu.tres" type="DynamicFont" id=3]
+[ext_resource path="res://GameBackgroundView.gd" type="Script" id=4]
 
 [node name="Wally" type="Node"]
 script = ExtResource( 1 )
@@ -10,15 +12,17 @@ script = ExtResource( 1 )
 script = ExtResource( 2 )
 
 [node name="WebcamTestView" type="TextureRect" parent="."]
+visible = false
 margin_right = 1920.0
 margin_bottom = 1080.0
 
 [node name="Label" type="Label" parent="WebcamTestView"]
-margin_left = 136.0
-margin_top = 72.0
-margin_right = 259.0
-margin_bottom = 99.0
-text = "WebcamTestView"
+margin_right = 1920.0
+margin_bottom = 1080.0
+custom_fonts/font = ExtResource( 3 )
+text = "Szukam kamer..."
+align = 1
+valign = 1
 __meta__ = {
 "_editor_description_": "WebcamTestView"
 }
@@ -26,6 +30,7 @@ __meta__ = {
 [node name="GameBackgroundView" type="TextureRect" parent="."]
 margin_right = 1920.0
 margin_bottom = 1080.0
+script = ExtResource( 4 )
 
 [node name="Label" type="Label" parent="GameBackgroundView"]
 margin_left = 200.0
@@ -35,6 +40,7 @@ margin_bottom = 174.0
 text = "GameBackgroundView"
 
 [node name="GameView" type="TextureRect" parent="."]
+visible = false
 margin_right = 1920.0
 margin_bottom = 1080.0
 
@@ -50,8 +56,9 @@ margin_right = 1920.0
 margin_bottom = 1080.0
 
 [node name="Label" type="Label" parent="ConfigureView"]
-margin_left = 192.0
-margin_top = 120.0
-margin_right = 232.0
-margin_bottom = 134.0
-text = "ConfigureView"
+margin_top = 10.0
+margin_right = 1920.0
+margin_bottom = 1080.0
+custom_fonts/font = ExtResource( 3 )
+text = "Konfiguracja"
+align = 1

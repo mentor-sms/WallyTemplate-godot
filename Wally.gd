@@ -1,5 +1,8 @@
 extends Node
 
+# game-specific settings:
+
+
 enum Step {
 	NOT_WORKING = 0,
 	TESTING = 1,
@@ -51,12 +54,16 @@ var _ct_keypoints_exists = false
 func set_step(step):
 	if step == Step.NOT_WORKING:
 		print("Step changed to NOT WORKIG.")
+		$WebcamTestView/Label.text = "Mentor Wally"
 	elif step == Step.TESTING:
 		print("Step changed to TESTING")
+		$WebcamTestView/Label.text = "Szukam kamer..."
 	elif step == Step.WAITING:
 		print("Step changed to WAITING")
+		$WebcamTestView/Label.text = "Testuję kamery..."
 	elif step == Step.AWAITING_KEYPOINTS:
 		print("Step changed to AWAITING_KEYPOINTS")
+		$WebcamTestView/Label.text = "Szukam sylwetki gracza..."
 	elif step == Step.CONFIGING:
 		print("Step changed to CONFIGING")
 	elif step == Step.WORKING:
@@ -69,10 +76,12 @@ func set_step(step):
 	_ct_step = step
 	
 	$WebcamTestView.visible = _ct_step <= Step.AWAITING_KEYPOINTS
-	$GameBackgroundView.visible = _ct_step >= Step.WAITING
+	$GameBackgroundView.visible = _ct_step >= Step.AWAITING_KEYPOINTS
 	$GameView.visible = _ct_step == Step.WORKING
 	$ConfigureView.visible = _ct_step == Step.CONFIGING
 	
+	if _ct_step >= Step.AWAITING_KEYPOINTS:
+		$GameBackgroundView.update()
 
 func start(camL, camR, use_sgbm):
 	print("Starting...")
@@ -112,6 +121,11 @@ func end():
 		emit_signal("ended")
 	else:
 		print("Already ended.")
+		
+func snapping():
+	if _ct_step >= Step.AWAITING_KEYPOINTS:
+		$GameBackgroundView.array = _wc.snap()
+		$GameBackgroundView.update()
 
 func tick(poses = [$WPlayer.Pose.HANDS_TOUCH]):
 	if _1st_tick:
@@ -166,6 +180,7 @@ func _ready():
 	print("Creating WallyController...")
 	_wc = WallyController.new()
 	print("WallyController created.")
+	$GameBackgroundView.connect("snapping", self, "snapping")
 	
 func _bad_pair():
 	print("Bad pair.")
@@ -186,6 +201,8 @@ func _bad_pair():
 		_ct_abort = true
 		emit_signal("ct_aborted")
 
+const config_fname = "user://config.json"
+
 func _testing_process(_delta):
 	if _ct_abort:
 		return
@@ -193,13 +210,27 @@ func _testing_process(_delta):
 	if _ct_step == Step.NOT_WORKING:
 		if _ct_pairs.empty():
 			print("Initing testing pairs...")
+			
+			var file = File.new()
+			var def = Vector2(-1, -1)
+			if file.file_exists(config_fname):
+				file.open(config_fname, File.READ)
+				var data = parse_json(file.get_as_text())
+				file.close()
+				if typeof(data) == TYPE_DICTIONARY:
+					def.x = data["camL"]
+					def.y = data["camR"]
+			if def.x >= 0 and def.y >= 0 and def.x <= cams_max_idx and def.y <= cams_max_idx and def.x != def.y:
+				_ct_pairs.push_back(def)
+				print("Default pair loaded.")
 			for c0 in range(0, cams_max_idx + 1):
 				for c1 in range(0, cams_max_idx + 1):
-					if c0 != c1:
-						_ct_pairs.push_back(Vector2(c0, c1))
+					var vec = Vector2(c0, c1)
+					if c0 != c1 and (_ct_pairs.size() == 0 or (_ct_pairs.size() > 0 and _ct_pairs[0] != vec)):
+						_ct_pairs.push_back(vec)
 			print("Testing pairs inited.")
 		_ct_curr_idx = 0
-		if not _ct_pairs.empty():
+		if not _ct_pairs.empty() and not _ct_bad_idxs.size() == _ct_pairs.size():
 			set_step(Step.TESTING)
 	elif _ct_step == Step.TESTING:
 		print("Testing pair ", _ct_curr_idx, ": ", _ct_pairs[_ct_curr_idx])
@@ -220,17 +251,32 @@ func _testing_process(_delta):
 			set_step(Step.AWAITING_KEYPOINTS)
 		else:
 			print("Pair failed to start.")
-			_bad_pair()
 			set_step(Step.TESTING)
+			_bad_pair()
 	elif _ct_step == Step.AWAITING_KEYPOINTS:
 		if _ct_keypoints_exists:
 			print("Pair tested successfully.")
+			
+			var config = {
+				"camL": _ct_pairs[_ct_curr_idx].x,
+				"camR": _ct_pairs[_ct_curr_idx].y
+			}
+			var file = File.new()
+			file.open(config_fname, File.WRITE)
+			file.store_string(to_json(config))
+			file.close()
+			
 			set_step(Step.CONFIGING)
 	else:
 		return
+		
+func _configure_process(_delta):
+	pass
 
 func _process(delta):
 	if _ct_step >= Step.AWAITING_KEYPOINTS:
 		tick()
 	if _ct_step < Step.CONFIGING:
 		_testing_process(delta)
+	if _ct_step == Step.CONFIGING:
+		_configure_process(delta)
