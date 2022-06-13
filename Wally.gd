@@ -7,10 +7,11 @@ const cams_distance = 22
 const cams_res = Vector2(960, 540)
 const board_res = Vector2(1920, 1080)
 const default_cams = Vector2(-1, -1)
-const cams_max_idx = 3 # ilość kamer * 2 - 1
+const cams_max_idx = 5 # ilość kamer * 2 - 1
 const sgbm = true
 const ct_test_time = 10
 const ct_kp_wait_time = 10
+const co_match_wait_time = 10
 const draw_webcam_background = false
 const draw_keypoints = true
 const draw_pose = true
@@ -82,27 +83,38 @@ var _ct_abort = false
 var _ct_keypoints_exists = false
 var _ct_kp_waiting = 0
 
+var _co_match_waiting = 0
+var _co_step = 0
+
 const config_fname = "user://config.json"
+
+func set_label(string: String):
+	$Background/TaskLabel.text = string
+	$Background/TaskLabel.visible = not string.empty()
 
 func set_step(step):
 	if step == Step.NOT_WORKING:
 		print("Step changed to NOT WORKIG.")
-		$WebcamTestView/Label.text = "Mentor Wally"
+		set_label("Mentor Wally")
 	elif step == Step.TESTING:
 		print("Step changed to TESTING")
-		$WebcamTestView/Label.text = "Szukam kamer..."
+		set_label("Szukam kamer...")
 	elif step == Step.WAITING:
 		print("Step changed to WAITING")
-		$WebcamTestView/Label.text = "Testuję kamery..."
+		set_label("Testuję kamery...")
 	elif step == Step.AWAITING_KEYPOINTS:
 		print("Step changed to AWAITING_KEYPOINTS")
-		$WebcamTestView/Label.text = "Szukam sylwetki gracza..."
+		set_label("Szukam sylwetki gracza...")
 	elif step == Step.CONFIGING:
 		print("Step changed to CONFIGING")
+		_co_step = 0
+		set_label("Konfiguracja")
 	elif step == Step.WORKING:
 		print("Step changed to WORKING")
+		set_label("")
 	else:
 		print ("Step changed to UNKNOWN, resetting.")
+		set_label("")
 		set_step(Step.NOT_WORKING)
 		return
 	
@@ -113,6 +125,7 @@ func set_step(step):
 	$GameBackgroundView.visible = _ct_step >= Step.AWAITING_KEYPOINTS	
 	$GameView.visible = _ct_step == Step.WORKING
 	$ConfigureView.visible = _ct_step == Step.CONFIGING
+	$ConfigureView/TimeoutLabel.visible = false
 	$Background.visible = _ct_step != Step.WORKING
 	
 	set_show_webcam_background(_ct_step >= Step.AWAITING_KEYPOINTS)
@@ -197,13 +210,13 @@ func tick(poses = [glob.Pose.HANDS_TOUCH]):
 			pidx += 1
 			$WPlayer.set_point(pidx, p)
 			
-		var left_hand = _wc.calc2DCentre([points[14], points[16], points[18], points[20]])
-		var right_hand = _wc.calc2DCentre([points[15], points[17], points[19], points[21]])
-		var left_foot = _wc.calc2DCentre([points[26], points[28], points[30]])
-		var right_foot = _wc.calc2DCentre([points[27], points[29], points[31]])
-		var torsop = _wc.calc2DCentre([points[10], points[11], points[22], points[23]])
-		var neckp = _wc.calc2DCentre([points[10], points[11]])
-		var assp = _wc.calc2DCentre([points[22], points[23]])
+		var left_hand = _wc.calc2DCentre([points[glob.PosePoint.LEFT_INDEX], points[glob.PosePoint.LEFT_THUMB], points[glob.PosePoint.LEFT_PINKY], points[glob.PosePoint.LEFT_WRIST]])
+		var right_hand = _wc.calc2DCentre([points[glob.PosePoint.RIGHT_INDEX], points[glob.PosePoint.RIGHT_THUMB], points[glob.PosePoint.RIGHT_PINKY], points[glob.PosePoint.RIGHT_WRIST]])
+		var left_foot = _wc.calc2DCentre([points[glob.PosePoint.LEFT_FOOT_INDEX], points[glob.PosePoint.LEFT_HEEL], points[glob.PosePoint.LEFT_ANKLE]])
+		var right_foot = _wc.calc2DCentre([points[glob.PosePoint.RIGHT_FOOT_INDEX], points[glob.PosePoint.RIGHT_HEEL], points[glob.PosePoint.RIGHT_ANKLE]])
+		var neckp = _wc.calc2DCentre([points[glob.PosePoint.LEFT_SHOULDER], points[glob.PosePoint.RIGHT_SHOULDER]])
+		var assp = _wc.calc2DCentre([points[glob.PosePoint.LEFT_HIP], points[glob.PosePoint.RIGHT_HIP]])
+		var torsop = _wc.calc2DCentre([neckp, assp])
 		
 		$WPlayer.set_point(0, left_hand, true)
 		$WPlayer.set_point(1, right_hand, true)
@@ -282,7 +295,7 @@ func _testing_process(delta):
 			set_step(Step.TESTING)
 	elif _ct_step == Step.TESTING:
 		print("Testing pair ", _ct_curr_idx, ": ", _ct_pairs[_ct_curr_idx])
-		$WebcamTestView/Label.text = "Testuję kamery... (" + String(_ct_pairs[_ct_curr_idx].x) + ", " + String(_ct_pairs[_ct_curr_idx].y) + ")"
+		$Background/TaskLabel.text = "Testuję kamery... (" + String(_ct_pairs[_ct_curr_idx].x) + ", " + String(_ct_pairs[_ct_curr_idx].y) + ")"
 		_ct_keypoints_exists = false
 		var _ct_testing = start(_ct_pairs[_ct_curr_idx].x, _ct_pairs[_ct_curr_idx].y, sgbm)
 		if not _ct_testing:
@@ -330,14 +343,65 @@ func _testing_process(delta):
 				_bad_pair(false)
 	else:
 		return
+
+func _re_count():
+	_co_match_waiting = 0
+	$ConfigureView/TimeoutLabel.visible = false
+
+func _config_count(delta):
+		_co_match_waiting += delta
+		var left = int(co_match_wait_time - _co_match_waiting)
+		if left < 0:
+			left = 0
+		$ConfigureView/TimeoutLabel.set_text(String(left))
+		$ConfigureView/TimeoutLabel.visible = true
 		
-func _configure_process(_delta):
-	pass
+		return left == 0
+		
+func _config_center():
+	var pcen = $WPlayer.get_point(glob.ExtraPosePoint.TORSO_CENTRE, true)
+	var bcen = board_res / 2
+	var mvy = move.y
+	if pcen.y > bcen.y:
+		mvy -= pcen.y - bcen.y
+	elif bcen.y > pcen.y:
+		mvy += bcen.y - pcen.y
+	var mvx = move.x
+	if pcen.x > bcen.x:
+		mvx -= pcen.x - bcen.x
+	elif bcen.x > pcen.x:
+		mvx += bcen.x - pcen.x
+	
+	move = Vector2(mvx, mvy)
+
+func _configure_process(delta):
+	if _co_step == 0:
+		$ConfigureView/InfoLabel.text = "Ustaw się horyzontalnie w centrum pola gry tak, by twoja twarz była widoczna."
+		
+		var nose = $WPlayer.get_point(glob.PosePoint.NOSE, false)
+		var r = glob.distance($WPlayer.get_point(glob.PosePoint.LEFT_EAR, false), $WPlayer.get_point(glob.PosePoint.RIGHT_EAR, false))
+		if nose.y - r - 50 > 0 and r > 0:
+			if _config_count(delta):
+				_co_step = 1
+		else:
+			_re_count()
+			
+		_config_center()
+	elif _co_step == 1:
+		$ConfigureView/InfoLabel.text = "Przyjmij pozycję litery T i ustaw się w takiej odległości, by dłonie znajdowały się w obszarze prowadnic."
+		
+		
+		
+		_config_center()
+	elif _co_step == 2:
+		$ConfigureView/InfoLabel.text = "Nie ruszając się z miejsca, wysuń ręce na wprost ciała, a następnie zegnij łokcie prostopadle to ramion i otwórz dłoń skierowaną w stronę kamer."
+	else:
+		_co_step = 0
 
 func _process(delta):
-	if _ct_step >= Step.AWAITING_KEYPOINTS:
-		tick()
 	if _ct_step < Step.CONFIGING:
 		_testing_process(delta)
 	if _ct_step == Step.CONFIGING:
 		_configure_process(delta)
+	if _ct_step >= Step.AWAITING_KEYPOINTS:
+		tick()
