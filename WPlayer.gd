@@ -3,13 +3,11 @@ extends Node
 const glob = preload("res://Globals.gd")
 var lhand
 var rhand
-var _scale = 100
 
 var _points:PoolVector2Array
 var _poses = []
 
-func get_scale():
-	return _scale
+var has_points = false
 
 func get_point(pid, extra = false):
 	if extra:
@@ -19,6 +17,10 @@ func get_point(pid, extra = false):
 func set_pose(pid, detected):
 	_poses[pid] = detected
 	
+func set_visibility(visible):
+	lhand.carpus.visible = visible
+	rhand.carpus.visible = visible
+	
 func set_point(pid, point, extra = false):
 	if extra:
 		var rpid = pid + glob.point_count
@@ -27,9 +29,9 @@ func set_point(pid, point, extra = false):
 		_points[int(pid)] = point
 	if extra:
 		if pid == glob.ExtraPosePoint.LEFT_HAND:
-			lhand.pos = point
+			lhand.pos_carpus = point
 		elif pid == glob.ExtraPosePoint.RIGHT_HAND:
-			rhand.pos = point
+			rhand.pos_carpus = point
 	else:
 		if pid == glob.PosePoint.LEFT_INDEX:
 			lhand.pos_index = point
@@ -44,14 +46,12 @@ func set_point(pid, point, extra = false):
 		elif pid == glob.PosePoint.RIGHT_PINKY:
 			rhand.pos_pinky = point
 		elif pid == glob.PosePoint.LEFT_WRIST:
-			lhand.pos_carpus = point
+			lhand.pos_wrist = point
 		elif pid == glob.PosePoint.RIGHT_WRIST:
-			rhand.pos_carpus = point
+			rhand.pos_wrist = point
 		elif pid == glob.PosePoint.LEFT_EAR or pid == glob.PosePoint.RIGHT_EAR:
 			var lear = get_point(glob.PosePoint.LEFT_EAR, false)
 			var rear = get_point(glob.PosePoint.RIGHT_EAR, false)
-			var r = glob.distance(lear, rear)
-			_scale = r
 
 func _ready():
 	lhand = $Hand

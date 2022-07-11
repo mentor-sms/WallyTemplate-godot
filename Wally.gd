@@ -9,12 +9,13 @@ const board_res = Vector2(1920, 1080)
 const default_cams = Vector2(-1, -1)
 const cams_max_idx = 5 # ilość kamer * 2 - 1
 const sgbm = true
-const ct_test_time = 10
-const ct_kp_wait_time = 10
-const co_match_wait_time = 10
+const ct_test_time = 5 # zmienić na 10
+const ct_kp_wait_time = 5 # zmienić na 10
+const co_match_wait_time = 5 # zmienić na 10
 const draw_webcam_background = false
 const draw_keypoints = true
 const draw_pose = true
+const draw_fingers = true
 var _poses_on = [0]
 func get_poses_on():
 	return _poses_on
@@ -37,6 +38,13 @@ func set_show_keypoints(show):
 		_show_keypoints = show
 func should_show_keypoints():
 	return _show_keypoints
+	
+var _show_fingers = false
+func set_show_fingers(show):
+	if draw_fingers:
+		_show_fingers = show
+func should_show_fingers():
+	return _show_fingers
 		
 var _show_pose = false
 func set_show_pose(show):
@@ -85,8 +93,7 @@ var _ct_kp_waiting = 0
 
 var _co_match_waiting = 0
 var _co_step = 0
-
-const config_fname = "user://config.json"
+var _co_mode = 0
 
 func set_label(string: String):
 	$Background/TaskLabel.text = string
@@ -94,15 +101,23 @@ func set_label(string: String):
 
 func set_step(step):
 	if step == Step.NOT_WORKING:
+		$WPlayer.lhand.set_stop_gestures()
+		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to NOT WORKIG.")
 		set_label("Mentor Wally")
 	elif step == Step.TESTING:
+		$WPlayer.lhand.set_stop_gestures()
+		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to TESTING")
 		set_label("Szukam kamer...")
 	elif step == Step.WAITING:
+		$WPlayer.lhand.set_stop_gestures()
+		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to WAITING")
 		set_label("Testuję kamery...")
 	elif step == Step.AWAITING_KEYPOINTS:
+		$WPlayer.lhand.set_stop_gestures()
+		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to AWAITING_KEYPOINTS")
 		set_label("Szukam sylwetki gracza...")
 	elif step == Step.CONFIGING:
@@ -113,13 +128,14 @@ func set_step(step):
 		print("Step changed to WORKING")
 		set_label("")
 	else:
-		print ("Step changed to UNKNOWN, resetting.")
+		print("Step changed to UNKNOWN, resetting.")
 		set_label("")
 		set_step(Step.NOT_WORKING)
 		return
 	
 	_ct_step = step
 	
+	$WPlayer.set_visibility(_ct_step >= Step.CONFIGING)
 	$WebcamTestView.visible = _ct_step <= Step.AWAITING_KEYPOINTS
 	$WebcamTestView/TimeoutLabel.visible = false
 	$GameBackgroundView.visible = _ct_step >= Step.AWAITING_KEYPOINTS	
@@ -131,6 +147,7 @@ func set_step(step):
 	set_show_webcam_background(_ct_step >= Step.AWAITING_KEYPOINTS)
 	set_show_keypoints(_ct_step == Step.CONFIGING)
 	set_show_pose(_ct_step > Step.AWAITING_KEYPOINTS)
+	set_show_fingers(_ct_step == Step.CONFIGING)
 	
 	$WebcamTestView.update()
 	$GameBackgroundView.update()
@@ -183,6 +200,8 @@ func snapping():
 		$GameBackgroundView.do_snap = true
 
 func tick(poses = [glob.Pose.HANDS_TOUCH]):
+	$WPlayer.has_points = false
+	
 	if _1st_tick:
 		_wc.startTicking()
 		_1st_tick = false
@@ -225,6 +244,7 @@ func tick(poses = [glob.Pose.HANDS_TOUCH]):
 		$WPlayer.set_point(4, torsop, true)
 		$WPlayer.set_point(5, neckp, true)
 		$WPlayer.set_point(6, assp, true)
+		$WPlayer.has_points = true
 		emit_signal("ticked")
 		return true
 	else:
@@ -235,10 +255,13 @@ func _ready():
 	set_step(Step.NOT_WORKING)
 	print("Creating WallyController...")
 	_wc = WallyController.new()
-	print("WallyController created.")
-	$GameBackgroundView.connect("snapping", self, "snapping")
-	self.connect("ticked", $GameBackgroundView, "update")
-	self.connect("ticked", $ConfigureView, "update")
+	var a = $GameBackgroundView.connect("snapping", self, "snapping")
+	var b = self.connect("ticked", $GameBackgroundView, "update")
+	var c = self.connect("ticked", $ConfigureView, "update")
+	if a and b and c:
+		print("WallyController created.")
+	else:
+		print("WallyController failed to connect.")
 	
 func _bad_pair(blacklist):
 	print("Bad pair.")
@@ -259,6 +282,31 @@ func _bad_pair(blacklist):
 		set_step(Step.NOT_WORKING)
 		_ct_abort = true
 		emit_signal("ct_aborted")
+		
+func _save_config_json(filename, json):
+	var file = File.new()
+	file.open(filename, File.WRITE)
+	file.store_string(to_json(json))
+	file.close()
+	
+func _load_config_json(filename, key, default):
+	var file = File.new()
+	
+	filename = "user://" + filename + ".json"
+	if file.file_exists(filename):
+		if file.open(filename, File.READ):
+			var content = file.get_as_text()
+			var data = parse_json(content)
+			file.close()
+			if typeof(data) == TYPE_DICTIONARY:
+				return data[key]
+			else:
+				print("Bad file syntax: ", file.name)
+		else:
+			print("Can't open file: ", file.name)
+	else:
+		print("File doesn't exist: ", filename)
+	return default
 
 func _testing_process(delta):
 	if _ct_abort:
@@ -273,13 +321,10 @@ func _testing_process(delta):
 			else:
 				var file = File.new()
 				var def = Vector2(-1, -1)
-				if file.file_exists(config_fname):
-					file.open(config_fname, File.READ)
-					var data = parse_json(file.get_as_text())
-					file.close()
-					if typeof(data) == TYPE_DICTIONARY:
-						def.x = data["camL"]
-						def.y = data["camR"]
+				
+				def.x = _load_config_json("cams", "camL", -1)
+				def.y = _load_config_json("cams", "camR", -1)
+				
 				if def.x >= 0 and def.y >= 0 and def.x <= cams_max_idx and def.y <= cams_max_idx and def.x != def.y:
 					_ct_pairs.push_back(def)
 					print("Default pair loaded.")
@@ -319,15 +364,11 @@ func _testing_process(delta):
 	elif _ct_step == Step.AWAITING_KEYPOINTS:
 		if _ct_keypoints_exists:
 			print("Pair tested successfully.")
-			
-			var config = {
+			var json = {
 				"camL": _ct_pairs[_ct_curr_idx].x,
 				"camR": _ct_pairs[_ct_curr_idx].y
 			}
-			var file = File.new()
-			file.open(config_fname, File.WRITE)
-			file.store_string(to_json(config))
-			file.close()
+			_save_config_json("cams", json)
 			
 			set_step(Step.CONFIGING)
 		else:
@@ -349,15 +390,15 @@ func _re_count():
 	$ConfigureView/TimeoutLabel.visible = false
 
 func _config_count(delta):
-		_co_match_waiting += delta
-		var left = int(co_match_wait_time - _co_match_waiting)
-		if left < 0:
-			left = 0
-		$ConfigureView/TimeoutLabel.set_text(String(left))
-		$ConfigureView/TimeoutLabel.visible = true
-		
-		return left == 0
-		
+	_co_match_waiting += delta
+	var left = int(co_match_wait_time - _co_match_waiting)
+	if left < 0:
+		left = 0
+	$ConfigureView/TimeoutLabel.set_text(String(left))
+	$ConfigureView/TimeoutLabel.visible = true
+	
+	return left == 0
+	
 func _config_center():
 	var pcen = $WPlayer.get_point(glob.ExtraPosePoint.TORSO_CENTRE, true)
 	var bcen = board_res / 2
@@ -373,30 +414,204 @@ func _config_center():
 		mvx += bcen.x - pcen.x
 	
 	move = Vector2(mvx, mvy)
+	
+	$ConfigureView.update()
 
+var _co_ge_lhand
+var _co_ge_rhand
+var _co_lo_index
+var _co_lo_thumb
+var _co_lo_pinky
+var _co_ro_index
+var _co_ro_thumb
+var _co_ro_pinky
+var _co_l0_index
+var _co_l0_thumb
+var _co_l0_pinky
+var _co_r0_index
+var _co_r0_thumb
+var _co_r0_pinky
 func _configure_process(delta):
+	$ConfigureView.show_guides = _co_step == 1
+	$ConfigureView.show_hguides = _co_step == 2
+	$ConfigureView.show_oguides = _co_step == 3 or _co_step == 4
+	
 	if _co_step == 0:
-		$ConfigureView/InfoLabel.text = "Ustaw się horyzontalnie w centrum pola gry tak, by twoja twarz była widoczna."
+		$ConfigureView/InfoLabel.text = "Ustaw się horyzontalnie w centrum pola gry tak, by twoja twarz była widoczna. Przyjmij pozycję naturalną."
+		
+		print($WPlayer.has_points)
+		
+		if not $WPlayer.has_points:
+			_re_count()
+			return
 		
 		var nose = $WPlayer.get_point(glob.PosePoint.NOSE, false)
 		var r = glob.distance($WPlayer.get_point(glob.PosePoint.LEFT_EAR, false), $WPlayer.get_point(glob.PosePoint.RIGHT_EAR, false))
-		if nose.y - r - 50 > 0 and r > 0:
+		
+		var cen = $WPlayer.get_point(glob.ExtraPosePoint.TORSO_CENTRE, true)
+		var lhand = $WPlayer.get_point(glob.ExtraPosePoint.LEFT_HAND, true)
+		var rhand = $WPlayer.get_point(glob.ExtraPosePoint.RIGHT_HAND, true)
+		var lleg = $WPlayer.get_point(glob.ExtraPosePoint.LEFT_FOOT, true)
+		var rleg = $WPlayer.get_point(glob.ExtraPosePoint.RIGHT_FOOT, true)
+		
+		if nose.y - r - 50 > 0 and r > 0 and lhand.x < cen.x and lleg.x < cen.x and rhand.x > cen.x and rleg.x > cen.x and lleg.y > cen.y and rleg.y > cen.y and lhand.y < lleg.y and rhand.y < rleg.y:
 			if _config_count(delta):
 				_co_step = 1
+				_re_count()
 		else:
 			_re_count()
 			
 		_config_center()
+			
 	elif _co_step == 1:
 		$ConfigureView/InfoLabel.text = "Przyjmij pozycję litery T i ustaw się w takiej odległości, by dłonie znajdowały się w obszarze prowadnic."
 		
+		if not $WPlayer.has_points:
+			_re_count()
+			return
 		
+		var cl = false
+		var cr = false
+		var fl = false
+		var fr = false
 		
+		for left in [true, false]:
+			var hand
+			if left:
+				hand = $WPlayer.get_point(glob.ExtraPosePoint.LEFT_HAND, true)
+			else:
+				hand = $WPlayer.get_point(glob.ExtraPosePoint.RIGHT_HAND, true)
+			for far in [true, false]:
+				var guide = $ConfigureView.get_guide(left, far)
+				var inside = hand.x > guide and hand.x < guide + 100
+				$ConfigureView.set_guide_idle(left, far, not inside)
+				if left:
+					if far:
+						fl = inside
+					else:
+						cl = inside
+				else:
+					if far:
+						fr = inside
+					else:
+						cr = inside
+		
+		var changed = false
+		if cl and cr and not fl and not fr:
+			if _co_mode != 1:
+				changed = true
+			_co_mode = 1
+		elif fl and fr and not cl and not cr:
+			if _co_mode != 2:
+				changed = true
+			_co_mode = 2
+		else:
+			_co_mode = 0
+			
+		if _co_mode == 0 or changed:
+			_re_count()
+		elif _config_count(delta):
+			if _co_mode == 2:
+				_co_step = 2
+				_re_count()
+			else:
+				_config_center()
+				_save_config_json("center", {"movex": move.x, "movey": move.y, "comode": _co_mode})
+				set_step(Step.WORKING)
+				return
+				
 		_config_center()
+				
 	elif _co_step == 2:
-		$ConfigureView/InfoLabel.text = "Nie ruszając się z miejsca, wysuń ręce na wprost ciała, a następnie zegnij łokcie prostopadle to ramion i otwórz dłoń skierowaną w stronę kamer."
+		$ConfigureView/InfoLabel.text = "Nie ruszając się z miejsca, wysuń ręce na wprost ciała, a następnie zegnij łokcie prostopadle do ramion."
+		
+		if not $WPlayer.has_points:
+			_re_count()
+			return
+		
+		var lhand = $WPlayer.get_point(glob.ExtraPosePoint.LEFT_HAND, true)
+		var rhand = $WPlayer.get_point(glob.ExtraPosePoint.RIGHT_HAND, true)
+		
+		var lg = $ConfigureView.get_hguide(true)
+		var rg = $ConfigureView.get_hguide(false)
+		
+		var lin = lg.has_point(lhand)
+		var rin = rg.has_point(rhand)
+		
+		print("has points: ", lin, " ", rin)
+		
+		$ConfigureView.set_hguide_idle(true, not lin)
+		$ConfigureView.set_hguide_idle(false, not rin)
+		
+		if lin and rin:
+			if _config_count(delta):
+				_co_step = 3
+				_co_ge_lhand = lhand
+				_co_ge_rhand = rhand
+				$ConfigureView.set_oguide(true, lhand)
+				$ConfigureView.set_oguide(false, rhand)
+				_re_count()
+		else:
+			_re_count()
+		
+	elif _co_step == 3 or _co_step == 4:
+		if _co_step == 3:
+			$ConfigureView/InfoLabel.text = "Utrzymując pozycję dłoni, rozpostrzyj palce."
+		else:
+			$ConfigureView/InfoLabel.text = "Utrzymując pozycję dłoni, zaciśnij pięść."
+			
+		if not $WPlayer.has_points:
+			_re_count()
+			return
+			
+		var lhand = $WPlayer.get_point(glob.ExtraPosePoint.LEFT_HAND, true)
+		var rhand = $WPlayer.get_point(glob.ExtraPosePoint.RIGHT_HAND, true)
+		
+		var lo = glob.distance(lhand, _co_ge_lhand) < 50
+		var ro = glob.distance(rhand, _co_ge_rhand) < 50
+		
+		$ConfigureView.set_oguide_idle(true, lo)
+		$ConfigureView.set_oguide_idle(false, ro)
+		
+		if lo and ro:
+			if _config_count(delta):
+				var lwrist = $WPlayer.get_point(glob.PosePoint.LEFT_WRIST, false)
+				var rwrist = $WPlayer.get_point(glob.PosePoint.RIGHT_WRIST, false)
+				if _co_step == 3:
+					_co_lo_index = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_INDEX))
+					_co_lo_thumb = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_THUMB))
+					_co_lo_pinky = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_PINKY))
+					_co_ro_index = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_INDEX))
+					_co_ro_thumb = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_THUMB))
+					_co_ro_pinky = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_PINKY))
+				elif _co_step == 4:
+					_co_l0_index = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_INDEX))
+					_co_l0_thumb = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_THUMB))
+					_co_l0_pinky = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_PINKY))
+					_co_r0_index = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_INDEX))
+					_co_r0_thumb = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_THUMB))
+					_co_r0_pinky = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_PINKY))
+					$WPlayer.lhand.set_use_gestures(_co_l0_pinky, _co_l0_thumb, _co_l0_index, _co_lo_pinky, _co_lo_thumb, _co_lo_index)
+					$WPlayer.rhand.set_use_gestures(_co_r0_pinky, _co_r0_thumb, _co_r0_index, _co_ro_pinky, _co_ro_thumb, _co_ro_index)
+					_save_config_json("lhand_gestures", {"_co_l0_pinky": _co_l0_pinky, "_co_l0_thumb": _co_l0_thumb, "_co_l0_index": _co_l0_index, "_co_lo_pinky": _co_lo_pinky, "_co_lo_thumb": _co_lo_thumb, "_co_lo_index": _co_lo_index})
+					_save_config_json("rhand_gestures", {"_co_r0_pinky": _co_r0_pinky, "_co_r0_thumb": _co_r0_thumb, "_co_r0_index": _co_r0_index, "_co_ro_pinky": _co_ro_pinky, "_co_ro_thumb": _co_ro_thumb, "_co_ro_index": _co_ro_index})
+				_co_step += 1
+				_re_count()
+		else:
+			_re_count()
+			
+	elif _co_step == 5:
+		$ConfigureView/InfoLabel.text = "Przesuń obiekt w wyznaczone miejsce, chwytając go poprzez zaciśnięcie pięści i upuszczając poprzez jej rozwarcie."
+		
+		if not $WPlayer.has_points:
+			_re_count()
+			return
+			
+		var lhand = $WPlayer.get_point(glob.ExtraPosePoint.LEFT_HAND, true)
+		var rhand = $WPlayer.get_point(glob.ExtraPosePoint.RIGHT_HAND, true)
 	else:
 		_co_step = 0
+	
 
 func _process(delta):
 	if _ct_step < Step.CONFIGING:
