@@ -8,7 +8,6 @@ const guide_color_bad = Color.red
 
 var show_guides = false
 var show_hguides = false
-var show_oguides = false
 
 var lc_idle = true
 var lf_idle = true
@@ -16,14 +15,9 @@ var rc_idle = true
 var rf_idle = true
 var lh_idle = true
 var rh_idle = true
-var lo_idle = true
-var ro_idle = true
 
 var lh_rect:Rect2 = Rect2(0,0,0,0)
 var rh_rect:Rect2 = Rect2(0,0,0,0)
-
-var lo_point
-var ro_point
 
 func set_ball(visible, reset):
 	$Ball.visible = visible
@@ -32,18 +26,6 @@ func set_ball(visible, reset):
 		$Ball.position.x = 455
 		$Ball.position.y = 464
 	
-func set_oguide(left, point):
-	if left:
-		lo_point = point
-	else:
-		ro_point = point
-
-func set_oguide_idle(left, idle):
-	if left:
-		lo_idle = idle
-	else:
-		ro_idle = idle
-
 func set_guide_idle(left, far, idle):
 	if left and far:
 		lf_idle = idle
@@ -101,7 +83,7 @@ func _draw():
 	draw_polyline(poly, Color.red, 2, glob.antialias)
 	draw_circle(c, 2, Color.red)
 	
-	if not show_guides and not show_hguides and not show_oguides:
+	if not show_guides and not show_hguides:
 		return
 	
 	var cidle = guide_color_idle
@@ -110,21 +92,6 @@ func _draw():
 	cidle.a = 0.5
 	cset.a = 0.5
 	cbad.a = 0.5
-	
-	if show_oguides:
-		var lo_color
-		if lo_idle:
-			lo_color = cidle
-		else:
-			lo_color = cset
-		var ro_color
-		if ro_idle:
-			ro_color = cidle
-		else:
-			ro_color = cset
-			
-		draw_circle(lo_point, 50, lo_color)
-		draw_circle(ro_point, 50, ro_color)
 	
 	if show_hguides:
 		var lsho = p.get_point(glob.PosePoint.LEFT_SHOULDER, false)

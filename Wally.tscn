@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=29 format=2]
 
 [ext_resource path="res://Wally.gd" type="Script" id=1]
 [ext_resource path="res://WPlayer.gd" type="Script" id=2]
@@ -13,6 +13,21 @@
 [ext_resource path="res://imgs/general/mentor_logo_default.svg" type="Texture" id=11]
 [ext_resource path="res://Ball.gd" type="Script" id=12]
 [ext_resource path="res://BallShape.gd" type="Script" id=13]
+[ext_resource path="res://imgs/wplayer/show.png" type="Texture" id=14]
+[ext_resource path="res://ButtonHide.gd" type="Script" id=15]
+[ext_resource path="res://imgs/wplayer/point.png" type="Texture" id=16]
+[ext_resource path="res://imgs/wplayer/hide.png" type="Texture" id=17]
+[ext_resource path="res://imgs/wplayer/grab.png" type="Texture" id=18]
+[ext_resource path="res://ButtonShow.gd" type="Script" id=19]
+[ext_resource path="res://ButtonGrab.gd" type="Script" id=20]
+[ext_resource path="res://ButtonPoint.gd" type="Script" id=21]
+[ext_resource path="res://ButtonMoar.gd" type="Script" id=22]
+[ext_resource path="res://imgs/wplayer/settings.png" type="Texture" id=23]
+
+[sub_resource type="CircleShape2D" id=4]
+
+[sub_resource type="RectangleShape2D" id=5]
+extents = Vector2( 64, 64 )
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 996, 48.25 )
@@ -48,6 +63,76 @@ script = ExtResource( 2 )
 
 [node name="Hand" type="RigidBody2D" parent="WPlayer"]
 script = ExtResource( 10 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WPlayer/Hand"]
+shape = SubResource( 4 )
+
+[node name="Menu" type="Node2D" parent="WPlayer/Hand"]
+position = Vector2( 235, 243 )
+
+[node name="ButtonMoar" type="Area2D" parent="WPlayer/Hand/Menu"]
+script = ExtResource( 22 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WPlayer/Hand/Menu/ButtonMoar"]
+shape = SubResource( 5 )
+
+[node name="Sprite" type="Sprite" parent="WPlayer/Hand/Menu/ButtonMoar"]
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 23 )
+hframes = 4
+frame = 3
+
+[node name="ButtonShow" type="Area2D" parent="WPlayer/Hand/Menu"]
+position = Vector2( 0, 128 )
+script = ExtResource( 19 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WPlayer/Hand/Menu/ButtonShow"]
+shape = SubResource( 5 )
+
+[node name="Sprite" type="Sprite" parent="WPlayer/Hand/Menu/ButtonShow"]
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 14 )
+hframes = 4
+frame = 3
+
+[node name="ButtonHide" type="Area2D" parent="WPlayer/Hand/Menu"]
+position = Vector2( 0, 256 )
+script = ExtResource( 15 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WPlayer/Hand/Menu/ButtonHide"]
+shape = SubResource( 5 )
+
+[node name="Sprite" type="Sprite" parent="WPlayer/Hand/Menu/ButtonHide"]
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 17 )
+hframes = 4
+frame = 3
+
+[node name="ButtonGrab" type="Area2D" parent="WPlayer/Hand/Menu"]
+position = Vector2( 128, 0 )
+script = ExtResource( 20 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WPlayer/Hand/Menu/ButtonGrab"]
+shape = SubResource( 5 )
+
+[node name="Sprite" type="Sprite" parent="WPlayer/Hand/Menu/ButtonGrab"]
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 18 )
+hframes = 4
+frame = 3
+
+[node name="ButtonPoint" type="Area2D" parent="WPlayer/Hand/Menu"]
+position = Vector2( 256, 0 )
+script = ExtResource( 21 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WPlayer/Hand/Menu/ButtonPoint"]
+shape = SubResource( 5 )
+
+[node name="Sprite" type="Sprite" parent="WPlayer/Hand/Menu/ButtonPoint"]
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 16 )
+hframes = 4
+frame = 3
 
 [node name="ConfigureView" type="TextureRect" parent="."]
 margin_right = 1920.0

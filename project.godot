@@ -28,6 +28,7 @@ config/icon="res://icon.png"
 
 WRigidBody2D="res://WRigidBody2D.gd"
 WCollisionShape2D="res://WCollisionShape2D.gd"
+WArea2D="res://WArea2D.gd"
 
 [display]
 

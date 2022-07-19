@@ -15,7 +15,6 @@ const co_match_wait_time = 5 # zmienić na 10
 const draw_webcam_background = false
 const draw_keypoints = true
 const draw_pose = true
-const draw_fingers = true
 var _poses_on = [0]
 func get_poses_on():
 	return _poses_on
@@ -38,13 +37,6 @@ func set_show_keypoints(show):
 		_show_keypoints = show
 func should_show_keypoints():
 	return _show_keypoints
-	
-var _show_fingers = false
-func set_show_fingers(show):
-	if draw_fingers:
-		_show_fingers = show
-func should_show_fingers():
-	return _show_fingers
 		
 var _show_pose = false
 func set_show_pose(show):
@@ -94,6 +86,9 @@ var _ct_kp_waiting = 0
 var _co_match_waiting = 0
 var _co_step = 0
 var _co_mode = 0
+
+var _co_ge_lhand = Vector2(0, 0)
+var _co_ge_rhand = Vector2(0, 0)
 
 func set_label(string: String):
 	$Background/TaskLabel.text = string
@@ -147,7 +142,6 @@ func set_step(step):
 	set_show_webcam_background(_ct_step >= Step.AWAITING_KEYPOINTS)
 	set_show_keypoints(_ct_step == Step.CONFIGING)
 	set_show_pose(_ct_step > Step.AWAITING_KEYPOINTS)
-	set_show_fingers(_ct_step == Step.CONFIGING)
 	
 	$WebcamTestView.update()
 	$GameBackgroundView.update()
@@ -417,20 +411,6 @@ func _config_center():
 	
 	$ConfigureView.update()
 
-var _co_ge_lhand
-var _co_ge_rhand
-var _co_lo_index
-var _co_lo_thumb
-var _co_lo_pinky
-var _co_ro_index
-var _co_ro_thumb
-var _co_ro_pinky
-var _co_l0_index
-var _co_l0_thumb
-var _co_l0_pinky
-var _co_r0_index
-var _co_r0_thumb
-var _co_r0_pinky
 func _configure_process(delta):
 	$ConfigureView.show_guides = _co_step == 1
 	$ConfigureView.show_hguides = _co_step == 2
@@ -511,14 +491,11 @@ func _configure_process(delta):
 		if _co_mode == 0 or changed:
 			_re_count()
 		elif _config_count(delta):
-			if _co_mode == 2:
-				_co_step = 2
-				_re_count()
-			else:
-				_config_center()
-				_save_config_json("center", {"movex": move.x, "movey": move.y, "comode": _co_mode})
-				set_step(Step.WORKING)
-				return
+			_config_center()
+			_save_config_json("center", {"movex": move.x, "movey": move.y, "comode": _co_mode})
+			_co_step = 2
+			_re_count()
+			return
 				
 		_config_center()
 				
@@ -538,70 +515,34 @@ func _configure_process(delta):
 		var lin = lg.has_point(lhand)
 		var rin = rg.has_point(rhand)
 		
-		print("has points: ", lin, " ", rin)
-		
 		$ConfigureView.set_hguide_idle(true, not lin)
 		$ConfigureView.set_hguide_idle(false, not rin)
 		
 		if lin and rin:
 			if _config_count(delta):
 				_co_step = 3
-				_co_ge_lhand = lhand
-				_co_ge_rhand = rhand
-				$ConfigureView.set_oguide(true, lhand)
-				$ConfigureView.set_oguide(false, rhand)
+				var _co_ge_lsho = $WPlayer.get_point(glob.PosePoint.LEFT_SHOULDER, false)
+				var _co_ge_rsho = $WPlayer.get_point(glob.PosePoint.RIGHT_SHOULDER, false)
+				_co_ge_lhand = Vector2(_co_ge_lsho.x - lhand.x, _co_ge_lsho.y - lhand.y)
+				_co_ge_rhand = Vector2(_co_ge_rsho.x - rhand.x, _co_ge_rsho.y - rhand.y)
+				_save_config_json("shoulder_menu", {"lmovex": _co_ge_lhand.x, "lmovey": _co_ge_lhand.y, "rmovex": _co_ge_rhand.x, "rmovey": _co_ge_rhand.y})
 				_re_count()
 		else:
 			_re_count()
-		
 	elif _co_step == 3 or _co_step == 4:
 		if _co_step == 3:
-			$ConfigureView/InfoLabel.text = "Utrzymując pozycję dłoni, rozpostrzyj palce."
+			$ConfigureView/InfoLabel.text = "Kliknij przycisk lewą ręką."
 		else:
-			$ConfigureView/InfoLabel.text = "Utrzymując pozycję dłoni, zaciśnij pięść."
-			
+			$ConfigureView/InfoLabel.text = "Kliknij przycisk prawą ręką."
+		
 		if not $WPlayer.has_points:
 			_re_count()
 			return
 			
 		var lhand = $WPlayer.get_point(glob.ExtraPosePoint.LEFT_HAND, true)
 		var rhand = $WPlayer.get_point(glob.ExtraPosePoint.RIGHT_HAND, true)
-		
-		var lo = glob.distance(lhand, _co_ge_lhand) < 50
-		var ro = glob.distance(rhand, _co_ge_rhand) < 50
-		
-		$ConfigureView.set_oguide_idle(true, lo)
-		$ConfigureView.set_oguide_idle(false, ro)
-		
-		if lo and ro:
-			if _config_count(delta):
-				var lwrist = $WPlayer.get_point(glob.PosePoint.LEFT_WRIST, false)
-				var rwrist = $WPlayer.get_point(glob.PosePoint.RIGHT_WRIST, false)
-				if _co_step == 3:
-					_co_lo_index = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_INDEX))
-					_co_lo_thumb = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_THUMB))
-					_co_lo_pinky = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_PINKY))
-					_co_ro_index = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_INDEX))
-					_co_ro_thumb = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_THUMB))
-					_co_ro_pinky = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_PINKY))
-				elif _co_step == 4:
-					_co_l0_index = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_INDEX))
-					_co_l0_thumb = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_THUMB))
-					_co_l0_pinky = glob.distance(lwrist, $WPlayer.get_point(glob.PosePoint.LEFT_PINKY))
-					_co_r0_index = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_INDEX))
-					_co_r0_thumb = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_THUMB))
-					_co_r0_pinky = glob.distance(rwrist, $WPlayer.get_point(glob.PosePoint.RIGHT_PINKY))
-					$WPlayer.lhand.set_use_gestures(_co_l0_pinky, _co_l0_thumb, _co_l0_index, _co_lo_pinky, _co_lo_thumb, _co_lo_index)
-					$WPlayer.rhand.set_use_gestures(_co_r0_pinky, _co_r0_thumb, _co_r0_index, _co_ro_pinky, _co_ro_thumb, _co_ro_index)
-					_save_config_json("lhand_gestures", {"_co_l0_pinky": _co_l0_pinky, "_co_l0_thumb": _co_l0_thumb, "_co_l0_index": _co_l0_index, "_co_lo_pinky": _co_lo_pinky, "_co_lo_thumb": _co_lo_thumb, "_co_lo_index": _co_lo_index})
-					_save_config_json("rhand_gestures", {"_co_r0_pinky": _co_r0_pinky, "_co_r0_thumb": _co_r0_thumb, "_co_r0_index": _co_r0_index, "_co_ro_pinky": _co_ro_pinky, "_co_ro_thumb": _co_ro_thumb, "_co_ro_index": _co_ro_index})
-				_co_step += 1
-				_re_count()
-		else:
-			_re_count()
-			
-	elif _co_step == 5:
-		$ConfigureView/InfoLabel.text = "Przesuń obiekt w wyznaczone miejsce, chwytając go poprzez zaciśnięcie pięści i upuszczając poprzez jej rozwarcie."
+	elif _co_step == 4:
+		$ConfigureView/InfoLabel.text = "Przesuń obiekt w wyznaczone miejsce."
 		
 		if not $WPlayer.has_points:
 			_re_count()
