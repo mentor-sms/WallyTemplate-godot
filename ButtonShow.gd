@@ -1,4 +1,10 @@
 extends WArea2D
 
 func _ready():
-	pass
+	grippable = false
+	hoverable = false
+	pointable = false
+	clickable = true
+	click_toggles = true
+	
+# show another

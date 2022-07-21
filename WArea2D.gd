@@ -4,6 +4,7 @@ var grippable = false
 var hoverable = false
 var pointable = false
 var clickable = false
+var click_toggles = false
 
 var use_left_hand = true
 var use_right_hand = true
@@ -15,6 +16,8 @@ signal not_pointed
 signal gripped
 signal released
 signal clicked
+signal toggled
+var _is_toggled = false
 
 var _entered_left = false
 var _entered_right = false
@@ -29,6 +32,12 @@ var _hovering_right = false
 func _ready():
 	self.connect("body_entered", self, "_on_WArea2D_body_entered")
 	self.connect("body_exited", self, "_on_WArea2D_body_exited")
+	self.connect("clicked", self, "_on_self_clicked")
+	
+func _on_self_clicked(left):
+	if click_toggles:
+		_is_toggled = not _is_toggled
+		emit_signal("toggled", left, _is_toggled)
 	
 func _hand_hovering(left):
 	if not hoverable:
@@ -90,17 +99,20 @@ func _hand_not_pointing(left, click = false):
 func _on_WRigidBody2D_body_exited(body):
 	var hand = body as Hand
 	if hand and (hand.is_left() and _entered_left) or (not hand.is_left() and _entered_right):
-		hand.disconnect("gripping", self, "_hand_gripping")
-		hand.disconnect("releasing", self, "_hand_releasing")
-		hand.disconnect("pointing", self, "_hand_pointing")
-		hand.disconnect("not_pointing", self, "_hand_not_pointing")
-		hand.disconnect("hovering", self, "_hand_hovering")
-		hand.disconnect("not_hovering", self, "_hand_not_hovering")
-		
-		hand.emit_signal("not_hovering")
+		if grippable:
+			hand.disconnect("gripping", self, "_hand_gripping")
+			hand.disconnect("releasing", self, "_hand_releasing")
 			
-		if hand.pointing:
-			hand.emit_signal("not_pointing")
+		if hoverable:
+			hand.disconnect("hovering", self, "_hand_hovering")
+			hand.disconnect("not_hovering", self, "_hand_not_hovering")
+			hand.emit_signal("not_hovering")
+		
+		if pointable:
+			hand.disconnect("pointing", self, "_hand_pointing")
+			hand.disconnect("not_pointing", self, "_hand_not_pointing")
+			if hand.pointing:
+				hand.emit_signal("not_pointing")
 
 func _on_WRigidBody2D_body_entered(body):
 	var hand = body as Hand
@@ -112,14 +124,17 @@ func _on_WRigidBody2D_body_entered(body):
 			return
 			
 	if hand and ((hand.is_left() and use_left_hand and not _entered_left) or (not hand.is_left() and use_right_hand and not _entered_right)):
-		hand.connect("gripping", self, "_hand_gripping", [hand.is_left()])
-		hand.connect("releasing", self, "_hand_releasing", [hand.is_left()])
-		hand.connect("pointing", self, "_hand_pointing", [hand.is_left()])
-		hand.connect("not_pointing", self, "_hand_not_pointing", [hand.is_left()])
-		hand.connect("hovering", self, "_hand_hovering", [hand.is_left()])
-		hand.connect("not_hovering", self, "_hand_not_hovering", [hand.is_left()])
+		if grippable:
+			hand.connect("gripping", self, "_hand_gripping", [hand.is_left()])
+			hand.connect("releasing", self, "_hand_releasing", [hand.is_left()])
 		
-		hand.emit_signal("hovering")
+		if hoverable:
+			hand.connect("hovering", self, "_hand_hovering", [hand.is_left()])
+			hand.connect("not_hovering", self, "_hand_not_hovering", [hand.is_left()])
+			hand.emit_signal("hovering")
 			
-		if hand.pointing:
-			hand.emit_signal("pointing")
+		if pointable:
+			hand.connect("pointing", self, "_hand_pointing", [hand.is_left()])
+			hand.connect("not_pointing", self, "_hand_not_pointing", [hand.is_left()])
+			if hand.pointing:
+				hand.emit_signal("pointing")

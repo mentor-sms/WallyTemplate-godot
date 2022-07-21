@@ -525,6 +525,7 @@ func _configure_process(delta):
 				var _co_ge_rsho = $WPlayer.get_point(glob.PosePoint.RIGHT_SHOULDER, false)
 				_co_ge_lhand = Vector2(_co_ge_lsho.x - lhand.x, _co_ge_lsho.y - lhand.y)
 				_co_ge_rhand = Vector2(_co_ge_rsho.x - rhand.x, _co_ge_rsho.y - rhand.y)
+				# where load this:
 				_save_config_json("shoulder_menu", {"lmovex": _co_ge_lhand.x, "lmovey": _co_ge_lhand.y, "rmovex": _co_ge_rhand.x, "rmovey": _co_ge_rhand.y})
 				_re_count()
 		else:
