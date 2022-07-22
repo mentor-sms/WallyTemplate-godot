@@ -13,9 +13,15 @@ _global_script_classes=[ {
 "class": "Hand",
 "language": "GDScript",
 "path": "res://Hand.gd"
+}, {
+"base": "Node2D",
+"class": "WTemplate2D",
+"language": "GDScript",
+"path": "res://WTemplate2D.gd"
 } ]
 _global_script_class_icons={
-"Hand": ""
+"Hand": "",
+"WTemplate2D": ""
 }
 
 [application]
@@ -26,8 +32,9 @@ config/icon="res://icon.png"
 
 [autoload]
 
-WRigidBody2D="res://WRigidBody2D.gd"
+WTemplate2D="res://WTemplate2D.gd"
 WCollisionShape2D="res://WCollisionShape2D.gd"
+WRigidBody2D="res://WRigidBody2D.gd"
 WArea2D="res://WArea2D.gd"
 
 [display]

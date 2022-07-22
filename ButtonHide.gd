@@ -5,7 +5,15 @@ func _ready():
 	hoverable = false
 	pointable = false
 	clickable = true
-	click_toggles = true
-	visible = false
+	click_toggles = false
+	
+	self.connect("clicked", self, "_clicked")
+	
+func _clicked(_left):
+	var parent = get_parent()
+	var buttons = ["ButtonHide", "ButtonShow", "ButtonMoar", "ButtonPoint", "ButtonGrab"]
+	for bname in buttons:
+		var button = parent.get_node(bname)
+		# sprawdź jakie zmienne potrzebują set_deferred:
+		button.visible = false
 
-# hide self

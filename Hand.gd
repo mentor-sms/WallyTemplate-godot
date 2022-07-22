@@ -41,6 +41,17 @@ func _init(left = true):
 	carpus.scale = Vector2(0.5, 0.5)
 	add_child(carpus)
 	
+	get_node("Menu/ButtonMoar").assoc_left = left
+	get_node("Menu/ButtonMoar").assoc_right = not left
+	get_node("Menu/ButtonShow").assoc_left = left
+	get_node("Menu/ButtonShow").assoc_right = not left
+	get_node("Menu/ButtonHide").assoc_left = left
+	get_node("Menu/ButtonHide").assoc_right = not left
+	get_node("Menu/ButtonGrab").assoc_left = left
+	get_node("Menu/ButtonGrab").assoc_right = not left
+	get_node("Menu/ButtonPoint").assoc_left = left
+	get_node("Menu/ButtonPoint").assoc_right = not left
+	
 func _ready():
 	pass
 	
@@ -50,7 +61,7 @@ func _process(delta):
 	carpus.look_at(pos_carpus)
 	carpus.rotate(PI)
 	
-	$CollisionShape2D.shape.radius = glob.distance(pos_wrist, pos_carpus)
+	get_node("CollisionShape2D").shape.radius = glob.distance(pos_wrist, pos_carpus)
 	
 	if use_menu:
 		var sho

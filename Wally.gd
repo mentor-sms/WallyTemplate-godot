@@ -96,23 +96,15 @@ func set_label(string: String):
 
 func set_step(step):
 	if step == Step.NOT_WORKING:
-		$WPlayer.lhand.set_stop_gestures()
-		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to NOT WORKIG.")
 		set_label("Mentor Wally")
 	elif step == Step.TESTING:
-		$WPlayer.lhand.set_stop_gestures()
-		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to TESTING")
 		set_label("Szukam kamer...")
 	elif step == Step.WAITING:
-		$WPlayer.lhand.set_stop_gestures()
-		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to WAITING")
 		set_label("Testuję kamery...")
 	elif step == Step.AWAITING_KEYPOINTS:
-		$WPlayer.lhand.set_stop_gestures()
-		$WPlayer.rhand.set_stop_gestures()
 		print("Step changed to AWAITING_KEYPOINTS")
 		set_label("Szukam sylwetki gracza...")
 	elif step == Step.CONFIGING:
@@ -313,9 +305,7 @@ func _testing_process(delta):
 				print("Testing pairs forced to single pair.")
 				_ct_pairs.push_back(default_cams)
 			else:
-				var file = File.new()
 				var def = Vector2(-1, -1)
-				
 				def.x = _load_config_json("cams", "camL", -1)
 				def.y = _load_config_json("cams", "camR", -1)
 				

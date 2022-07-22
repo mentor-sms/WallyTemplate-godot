@@ -1,34 +1,8 @@
 extends RigidBody2D
 
-var grippable = false
-var hoverable = false
-var pointable = false
-var clickable = false
-
-var use_left_hand = true
-var use_right_hand = true
-
-signal hovered
-signal not_hovered
-signal pointed
-signal not_pointed
-signal gripped
-signal released
-signal clicked
-
-var _entered_left = false
-var _entered_right = false
-
-var _gripping_left = false
-var _pointing_left = false
-var _hovering_left = false
-var _gripping_right = false
-var _pointing_right = false
-var _hovering_right = false
-
 func _ready():
-	self.connect("body_entered", self, "_on_WRigidBody2D_body_entered")
-	self.connect("body_exited", self, "_on_WRigidBody2D_body_exited")
+	self.connect("body_entered", self, "_on_body_entered")
+	self.connect("body_exited", self, "_on_body_exited")
 	
 func _hand_hovering(left):
 	if not hoverable:
