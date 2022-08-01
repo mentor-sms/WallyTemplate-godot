@@ -49,9 +49,6 @@ func set_point(pid, point, extra = false):
 			lhand.pos_wrist = point
 		elif pid == glob.PosePoint.RIGHT_WRIST:
 			rhand.pos_wrist = point
-		elif pid == glob.PosePoint.LEFT_EAR or pid == glob.PosePoint.RIGHT_EAR:
-			var lear = get_point(glob.PosePoint.LEFT_EAR, false)
-			var rear = get_point(glob.PosePoint.RIGHT_EAR, false)
 
 func _ready():
 	lhand = $Hand

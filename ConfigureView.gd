@@ -6,18 +6,18 @@ const guide_color_idle = Color.blue
 const guide_color_set = Color.green
 const guide_color_bad = Color.red
 
-var show_guides = false
-var show_hguides = false
+var show_guides : bool = false
+var show_hguides : bool = false
 
-var lc_idle = true
-var lf_idle = true
-var rc_idle = true
-var rf_idle = true
-var lh_idle = true
-var rh_idle = true
+var lc_idle : bool = true
+var lf_idle : bool = true
+var rc_idle : bool = true
+var rf_idle : bool = true
+var lh_idle : bool = true
+var rh_idle : bool = true
 
-var lh_rect:Rect2 = Rect2(0,0,0,0)
-var rh_rect:Rect2 = Rect2(0,0,0,0)
+var lh_rect : Rect2 = Rect2(0,0,0,0)
+var rh_rect : Rect2 = Rect2(0,0,0,0)
 
 func set_ball(visible, reset):
 	$Ball.visible = visible

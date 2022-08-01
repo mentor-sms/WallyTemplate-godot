@@ -11,26 +11,26 @@ signal not_hovering
 
 const glob = preload("res://Globals.gd")
 
-var pos_wrist:Vector2 = Vector2(0, 0)
-var pos_carpus:Vector2 = Vector2(0, 0)
+var pos_wrist : Vector2 = Vector2(0, 0)
+var pos_carpus : Vector2 = Vector2(0, 0)
 
-var gripping = false
-var pointing = false
+var gripping : bool = false
+var pointing : bool = false
 
-var _co_ge_sho:Vector2 = Vector2(0, 0)
-var use_menu:bool = false
+var _co_ge_sho : Vector2 = Vector2(0, 0)
+var use_menu : bool = false
 
-var _left:bool
+var _left : bool
 func is_left():
 	return _left
 
-var carpus:Sprite = Sprite.new()
+var carpus : Sprite = Sprite.new()
 
 func set_menu(co_ge_sho):
 	_co_ge_sho = co_ge_sho
 	use_menu = true
 
-func _init(left = true):	
+func _init(left = true):
 	_left = left
 	if left:
 		carpus.set_texture(load("res://imgs/wplayer/lhand.png"))
@@ -39,23 +39,57 @@ func _init(left = true):
 	carpus.hframes = 3
 	carpus.set_frame(0)
 	carpus.scale = Vector2(0.5, 0.5)
-	add_child(carpus)
-	
-	get_node("Menu/ButtonMoar").assoc_left = left
-	get_node("Menu/ButtonMoar").assoc_right = not left
-	get_node("Menu/ButtonShow").assoc_left = left
-	get_node("Menu/ButtonShow").assoc_right = not left
-	get_node("Menu/ButtonHide").assoc_left = left
-	get_node("Menu/ButtonHide").assoc_right = not left
-	get_node("Menu/ButtonGrab").assoc_left = left
-	get_node("Menu/ButtonGrab").assoc_right = not left
-	get_node("Menu/ButtonPoint").assoc_left = left
-	get_node("Menu/ButtonPoint").assoc_right = not left
 	
 func _ready():
-	pass
+	if not _left:
+		var other = get_parent().lhand
+		var menu = Node2D.new()
+		menu.name = "Menu"
+		add_child(menu, true)
+		menu.add_child(ButtonMoar.new(), true)
+		menu.add_child(ButtonShow.new(), true)
+		menu.add_child(ButtonHide.new(), true)
+		menu.add_child(ButtonGrab.new(), true)
+		menu.add_child(ButtonPoint.new(), true)
+		
+	add_child(carpus)
+		
+	get_node("Menu/ButtonMoar").templ2D.assoc_left = _left
+	get_node("Menu/ButtonMoar").templ2D.assoc_right = not _left
+	get_node("Menu/ButtonShow").templ2D.assoc_left = _left
+	get_node("Menu/ButtonShow").templ2D.assoc_right = not _left
+	get_node("Menu/ButtonHide").templ2D.assoc_left = _left
+	get_node("Menu/ButtonHide").templ2D.assoc_right = not _left
+	get_node("Menu/ButtonGrab").templ2D.assoc_left = _left
+	get_node("Menu/ButtonGrab").templ2D.assoc_right = not _left
+	get_node("Menu/ButtonPoint").templ2D.assoc_left = _left
+	get_node("Menu/ButtonPoint").templ2D.assoc_right = not _left
 	
-func _process(delta):
+	var other_hand
+	if _left:
+		other_hand = get_parent().rhand
+	else:
+		other_hand = get_parent().lhand
+# warning-ignore:return_value_discarded
+	get_node("Menu/ButtonGrab").connect("grab", other_hand, "_grab")
+# warning-ignore:return_value_discarded
+	get_node("Menu/ButtonGrab").connect("point", other_hand, "_point")
+# warning-ignore:return_value_discarded
+	get_node("Menu/ButtonGrab").connect("grab", self, "_grab")
+# warning-ignore:return_value_discarded
+	get_node("Menu/ButtonGrab").connect("point", self, "_point")
+	
+func _grab(left, grab):
+	if left != _left:
+		return
+	gripping = grab
+	
+func _point(left, point):
+	if left != _left:
+		return
+	pointing = point
+	
+func _process(_delta):
 	carpus.set_global_position(pos_wrist)
 	
 	carpus.look_at(pos_carpus)

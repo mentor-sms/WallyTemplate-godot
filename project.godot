@@ -9,19 +9,49 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "WArea2D",
+"class": "ButtonGrab",
+"language": "GDScript",
+"path": "res://ButtonGrab.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonHide",
+"language": "GDScript",
+"path": "res://ButtonHide.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonMoar",
+"language": "GDScript",
+"path": "res://ButtonMoar.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonPoint",
+"language": "GDScript",
+"path": "res://ButtonPoint.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonShow",
+"language": "GDScript",
+"path": "res://ButtonShow.gd"
+}, {
 "base": "RigidBody2D",
 "class": "Hand",
 "language": "GDScript",
 "path": "res://Hand.gd"
 }, {
-"base": "Node2D",
-"class": "WTemplate2D",
+"base": "CollisionObject2D",
+"class": "WCollisionObject2D",
 "language": "GDScript",
-"path": "res://WTemplate2D.gd"
+"path": "res://CollisionObject2D.gd"
 } ]
 _global_script_class_icons={
+"ButtonGrab": "",
+"ButtonHide": "",
+"ButtonMoar": "",
+"ButtonPoint": "",
+"ButtonShow": "",
 "Hand": "",
-"WTemplate2D": ""
+"WCollisionObject2D": ""
 }
 
 [application]
@@ -32,7 +62,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
-WTemplate2D="res://WTemplate2D.gd"
+WTemplate2D="res://CollisionObject2D.gd"
 WCollisionShape2D="res://WCollisionShape2D.gd"
 WRigidBody2D="res://WRigidBody2D.gd"
 WArea2D="res://WArea2D.gd"

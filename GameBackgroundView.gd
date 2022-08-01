@@ -2,8 +2,9 @@ extends TextureRect
 
 const glob = preload("res://Globals.gd")
 
-var snap_out:Dictionary
-var do_snap:bool = false
+var snap_out : Dictionary
+var do_snap : bool = false
+
 signal snapping
 
 const pts_color = Color.darkblue
