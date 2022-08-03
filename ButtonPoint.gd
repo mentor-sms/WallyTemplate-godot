@@ -5,6 +5,8 @@ class_name ButtonPoint
 signal point
 
 func _ready():
+	name = "ButtonPoint"
+	
 	if templ2D.assoc_left:
 		pass
 	if templ2D.assoc_right:

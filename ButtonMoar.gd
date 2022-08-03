@@ -3,6 +3,8 @@ extends WArea2D
 class_name ButtonMoar
 
 func _ready():
+	name = "ButtonMoar"
+	
 	if templ2D.assoc_left:
 		pass
 	if templ2D.assoc_right:

@@ -1,6 +1,4 @@
-extends CollisionObject2D
-
-class_name WCollisionObject2D
+class_name WCollisionTemplate2D
 
 var assoc_left = false
 var assoc_right = false
@@ -36,10 +34,6 @@ var _pointing_right = false
 var _hovering_right = false
 
 func _ready():
-# warning-ignore:return_value_discarded
-	self.connect("body_entered", self, "_on_body_entered")
-# warning-ignore:return_value_discarded
-	self.connect("body_exited", self, "_on_body_exited")
 # warning-ignore:return_value_discarded
 	self.connect("clicked", self, "_on_self_clicked")
 
@@ -106,8 +100,17 @@ func _hand_not_pointing(left, click = false):
 		emit_signal("clicked", left)
 
 func on_body_exited(body):
-	var hand = body as Hand
-	if hand and (hand.is_left() and _entered_left) or (not hand.is_left() and _entered_right):
+	var left
+	if body.name == "lhand":
+		left = true
+	elif body.name == "rhand":
+		left = false
+	else:
+		return
+	
+	var hand = body
+	
+	if (left and _entered_left) or (not left and _entered_right):
 		if grippable:
 			hand.disconnect("gripping", self, "_hand_gripping")
 			hand.disconnect("releasing", self, "_hand_releasing")
@@ -124,26 +127,35 @@ func on_body_exited(body):
 				hand.emit_signal("not_pointing")	
 
 func on_body_entered(body):
-	var hand = body as Hand
-	if hand.is_left():
+	var left
+	if body.name == "lhand":
+		left = true
+	elif body.name == "rhand":
+		left = false
+	else:
+		return
+	
+	var hand = body
+	
+	if left:
 		if not use_left_hand:
 			return
 	else:
 		if not use_right_hand:
 			return
 			
-	if hand and ((hand.is_left() and use_left_hand and not _entered_left) or (not hand.is_left() and use_right_hand and not _entered_right)):
+	if (left and use_left_hand and not _entered_left) or (not left and use_right_hand and not _entered_right):
 		if grippable:
-			hand.connect("gripping", self, "_hand_gripping", [hand.is_left()])
-			hand.connect("releasing", self, "_hand_releasing", [hand.is_left()])
+			hand.connect("gripping", self, "_hand_gripping", [left])
+			hand.connect("releasing", self, "_hand_releasing", [left])
 		
 		if hoverable:
-			hand.connect("hovering", self, "_hand_hovering", [hand.is_left()])
-			hand.connect("not_hovering", self, "_hand_not_hovering", [hand.is_left()])
+			hand.connect("hovering", self, "_hand_hovering", [left])
+			hand.connect("not_hovering", self, "_hand_not_hovering", [left])
 			hand.emit_signal("hovering")
 			
 		if pointable:
-			hand.connect("pointing", self, "_hand_pointing", [hand.is_left()])
-			hand.connect("not_pointing", self, "_hand_not_pointing", [hand.is_left()])
+			hand.connect("pointing", self, "_hand_pointing", [left])
+			hand.connect("not_pointing", self, "_hand_not_pointing", [left])
 			if hand.pointing:
 				hand.emit_signal("pointing")

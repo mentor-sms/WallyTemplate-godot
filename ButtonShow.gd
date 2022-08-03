@@ -3,6 +3,8 @@ extends WArea2D
 class_name ButtonShow
 
 func _ready():
+	name = "ButtonShow"
+	
 	if templ2D.assoc_left:
 		pass
 	if templ2D.assoc_right:

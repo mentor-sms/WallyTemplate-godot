@@ -3,6 +3,8 @@ extends WArea2D
 class_name ButtonHide
 
 func _ready():
+	name = "ButtonHide"
+	
 	if templ2D.assoc_left:
 		pass
 	if templ2D.assoc_right:

@@ -33,8 +33,10 @@ func set_menu(co_ge_sho):
 func _init(left = true):
 	_left = left
 	if left:
+		name = "lhand"
 		carpus.set_texture(load("res://imgs/wplayer/lhand.png"))
 	else:
+		name = "rhand"
 		carpus.set_texture(load("res://imgs/wplayer/rhand.png"))
 	carpus.hframes = 3
 	carpus.set_frame(0)
@@ -45,6 +47,10 @@ func _ready():
 		var other = get_parent().lhand
 		var menu = Node2D.new()
 		menu.name = "Menu"
+		var cshape = CollisionShape2D.new()
+		cshape.name = "CollisionShape2D"
+		cshape.shape = other.get_node("CollisionShape2D").shape
+		add_child(cshape, true)
 		add_child(menu, true)
 		menu.add_child(ButtonMoar.new(), true)
 		menu.add_child(ButtonShow.new(), true)
@@ -66,27 +72,45 @@ func _ready():
 	get_node("Menu/ButtonPoint").templ2D.assoc_right = not _left
 	
 	var other_hand
-	if _left:
-		other_hand = get_parent().rhand
-	else:
+	if not _left:
 		other_hand = get_parent().lhand
-# warning-ignore:return_value_discarded
-	get_node("Menu/ButtonGrab").connect("grab", other_hand, "_grab")
-# warning-ignore:return_value_discarded
-	get_node("Menu/ButtonGrab").connect("point", other_hand, "_point")
-# warning-ignore:return_value_discarded
-	get_node("Menu/ButtonGrab").connect("grab", self, "_grab")
-# warning-ignore:return_value_discarded
-	get_node("Menu/ButtonGrab").connect("point", self, "_point")
+		
+		# warning-ignore:return_value_discarded
+		get_node("Menu/ButtonGrab").connect("grab", other_hand, "_grab")
+		# warning-ignore:return_value_discarded
+		get_node("Menu/ButtonPoint").connect("point", other_hand, "_point")
+		# warning-ignore:return_value_discarded
+		get_node("Menu/ButtonGrab").connect("grab", self, "_grab")
+		# warning-ignore:return_value_discarded
+		get_node("Menu/ButtonPoint").connect("point", self, "_point")
+		
+		# warning-ignore:return_value_discarded
+		other_hand.get_node("Menu/ButtonGrab").connect("grab", self, "_grab")
+		# warning-ignore:return_value_discarded
+		other_hand.get_node("Menu/ButtonPoint").connect("point", self, "_point")
+		# warning-ignore:return_value_discarded
+		other_hand.get_node("Menu/ButtonGrab").connect("grab", other_hand, "_grab")
+		# warning-ignore:return_value_discarded
+		other_hand.get_node("Menu/ButtonPoint").connect("point", other_hand, "_point")
 	
 func _grab(left, grab):
 	if left != _left:
 		return
+	if gripping != grab:
+		if grab:
+			emit_signal("gripping", left)
+		else:
+			emit_signal("releasing", left)
 	gripping = grab
 	
 func _point(left, point):
 	if left != _left:
 		return
+	if pointing != point:
+		if point:
+			emit_signal("pointing", left)
+		else:
+			emit_signal("not_pointing", left)
 	pointing = point
 	
 func _process(_delta):
@@ -95,9 +119,16 @@ func _process(_delta):
 	carpus.look_at(pos_carpus)
 	carpus.rotate(PI)
 	
-	get_node("CollisionShape2D").shape.radius = glob.distance(pos_wrist, pos_carpus)
+	var cshape = get_node("CollisionShape2D")
+	
+	if not cshape:
+		return
+	
+	cshape.shape.radius = glob.distance(pos_wrist, pos_carpus)
 	
 	if use_menu:
+		get_node("Menu").visible = true
+		
 		var sho
 		if _left:
 			sho = get_parent().get_point(glob.PosePoint.LEFT_SHOULDER, false)
@@ -113,3 +144,5 @@ func _process(_delta):
 			carpus.set_frame(2)
 		else:
 			carpus.set_frame(0)
+	else:
+		get_node("Menu").visible = false

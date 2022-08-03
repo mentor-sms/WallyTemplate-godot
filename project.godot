@@ -39,10 +39,30 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Hand.gd"
 }, {
+"base": "Area2D",
+"class": "WArea2D",
+"language": "GDScript",
+"path": "res://WArea2D.gd"
+}, {
 "base": "CollisionObject2D",
 "class": "WCollisionObject2D",
 "language": "GDScript",
-"path": "res://CollisionObject2D.gd"
+"path": "res://WCollisionObject2D.gd"
+}, {
+"base": "CollisionShape2D",
+"class": "WCollisionShape2D",
+"language": "GDScript",
+"path": "res://WCollisionShape2D.gd"
+}, {
+"base": "Reference",
+"class": "WCollisionTemplate2D",
+"language": "GDScript",
+"path": "res://WCollisionTemplate2D.gd"
+}, {
+"base": "RigidBody2D",
+"class": "WRigidBody2D",
+"language": "GDScript",
+"path": "res://WRigidBody2D.gd"
 } ]
 _global_script_class_icons={
 "ButtonGrab": "",
@@ -51,7 +71,11 @@ _global_script_class_icons={
 "ButtonPoint": "",
 "ButtonShow": "",
 "Hand": "",
-"WCollisionObject2D": ""
+"WArea2D": "",
+"WCollisionObject2D": "",
+"WCollisionShape2D": "",
+"WCollisionTemplate2D": "",
+"WRigidBody2D": ""
 }
 
 [application]
@@ -59,13 +83,6 @@ _global_script_class_icons={
 config/name="WallyTemplate"
 run/main_scene="res://Wally.tscn"
 config/icon="res://icon.png"
-
-[autoload]
-
-WTemplate2D="res://CollisionObject2D.gd"
-WCollisionShape2D="res://WCollisionShape2D.gd"
-WRigidBody2D="res://WRigidBody2D.gd"
-WArea2D="res://WArea2D.gd"
 
 [display]
 

@@ -8,6 +8,8 @@ var left_toggled : bool = false
 var right_toggled : bool = false
 
 func _ready():
+	name = "ButtonGrab"
+	
 	if templ2D.assoc_left:
 		pass
 	if templ2D.assoc_right:
