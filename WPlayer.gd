@@ -33,19 +33,7 @@ func set_point(pid, point, extra = false):
 		elif pid == glob.ExtraPosePoint.RIGHT_HAND:
 			rhand.pos_carpus = point
 	else:
-		if pid == glob.PosePoint.LEFT_INDEX:
-			lhand.pos_index = point
-		elif pid == glob.PosePoint.LEFT_THUMB:
-			lhand.pos_thumb = point
-		elif pid == glob.PosePoint.LEFT_PINKY:
-			lhand.pos_pinky = point
-		elif pid == glob.PosePoint.RIGHT_INDEX:
-			rhand.pos_index = point
-		elif pid == glob.PosePoint.RIGHT_THUMB:
-			rhand.pos_thumb = point
-		elif pid == glob.PosePoint.RIGHT_PINKY:
-			rhand.pos_pinky = point
-		elif pid == glob.PosePoint.LEFT_WRIST:
+		if pid == glob.PosePoint.LEFT_WRIST:
 			lhand.pos_wrist = point
 		elif pid == glob.PosePoint.RIGHT_WRIST:
 			rhand.pos_wrist = point

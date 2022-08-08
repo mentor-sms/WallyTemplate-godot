@@ -52,18 +52,14 @@ func get_guide(left, far):
 	var r14 = wally.board_res.x / 4 + 50
 	if far:
 		if left:
-			print("far left: ", r14 - 50)
 			return r14 - 50
 		else:
-			print("far right: ", wally.board_res.x - r14 - 50)
 			return wally.board_res.x - r14 - 50
 	else:
 		r14 += r14 / 2 - 50
 		if left:
-			print("close right: ", r14 - 50)
 			return r14 - 50
 		else:
-			print("close left: ", wally.board_res.x - r14 - 50)
 			return wally.board_res.x - r14 - 50
 
 func _draw():

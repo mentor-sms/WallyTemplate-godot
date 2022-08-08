@@ -404,12 +404,9 @@ func _config_center():
 func _configure_process(delta):
 	$ConfigureView.show_guides = _co_step == 1
 	$ConfigureView.show_hguides = _co_step == 2
-	$ConfigureView.show_oguides = _co_step == 3 or _co_step == 4
 	
 	if _co_step == 0:
 		$ConfigureView/InfoLabel.text = "Ustaw się horyzontalnie w centrum pola gry tak, by twoja twarz była widoczna. Przyjmij pozycję naturalną."
-		
-		print($WPlayer.has_points)
 		
 		if not $WPlayer.has_points:
 			_re_count()
