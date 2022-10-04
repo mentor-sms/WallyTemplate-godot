@@ -1,0 +1,114 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "RigidBody2D",
+"class": "Ball",
+"language": "GDScript",
+"path": "res://Ball.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonGrab",
+"language": "GDScript",
+"path": "res://ButtonGrab.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonHide",
+"language": "GDScript",
+"path": "res://ButtonHide.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonMoar",
+"language": "GDScript",
+"path": "res://ButtonMoar.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonPoint",
+"language": "GDScript",
+"path": "res://ButtonPoint.gd"
+}, {
+"base": "WArea2D",
+"class": "ButtonShow",
+"language": "GDScript",
+"path": "res://ButtonShow.gd"
+}, {
+"base": "KinematicBody2D",
+"class": "Hand",
+"language": "GDScript",
+"path": "res://Hand.gd"
+}, {
+"base": "Area2D",
+"class": "WArea2D",
+"language": "GDScript",
+"path": "res://WArea2D.gd"
+}, {
+"base": "CollisionObject2D",
+"class": "WCollisionObject2D",
+"language": "GDScript",
+"path": "res://WCollisionObject2D.gd"
+}, {
+"base": "CollisionShape2D",
+"class": "WCollisionShape2D",
+"language": "GDScript",
+"path": "res://WCollisionShape2D.gd"
+}, {
+"base": "Reference",
+"class": "WCollisionTemplate2D",
+"language": "GDScript",
+"path": "res://WCollisionTemplate2D.gd"
+}, {
+"base": "KinematicBody2D",
+"class": "WKinematicBody2D",
+"language": "GDScript",
+"path": "res://WKinematicBody2D.gd"
+}, {
+"base": "RigidBody2D",
+"class": "WRigidBody2D",
+"language": "GDScript",
+"path": "res://WRigidBody2D.gd"
+} ]
+_global_script_class_icons={
+"Ball": "",
+"ButtonGrab": "",
+"ButtonHide": "",
+"ButtonMoar": "",
+"ButtonPoint": "",
+"ButtonShow": "",
+"Hand": "",
+"WArea2D": "",
+"WCollisionObject2D": "",
+"WCollisionShape2D": "",
+"WCollisionTemplate2D": "",
+"WKinematicBody2D": "",
+"WRigidBody2D": ""
+}
+
+[application]
+
+config/name="WallyTemplate"
+run/main_scene="res://Wally.tscn"
+config/icon="res://icon.png"
+
+[display]
+
+window/size/width=1920
+window/size/height=1080
+
+[gui]
+
+common/drop_mouse_on_gui_input_disabled=true
+
+[physics]
+
+common/enable_pause_aware_picking=true
+
+[rendering]
+
+environment/default_environment="res://default_env.tres"
